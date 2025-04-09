@@ -99,8 +99,8 @@ class VoucherProvider extends ChangeNotifier {
     }
   }
   
-  List<Voucher> searchVouchers(String query, {int? categoryId}) {
-    if (query.isEmpty && categoryId == null) {
+  List<Voucher> searchVouchers(String query, {int? categoryId, bool? onlyFavorites, bool? onlyActive}) {
+    if (query.isEmpty && categoryId == null && onlyFavorites != true && onlyActive != true) {
       return _vouchers;
     }
     
@@ -108,11 +108,16 @@ class VoucherProvider extends ChangeNotifier {
       final matchesQuery = query.isEmpty || 
         voucher.code.toLowerCase().contains(query.toLowerCase()) ||
         voucher.description.toLowerCase().contains(query.toLowerCase()) ||
-        voucher.store.toLowerCase().contains(query.toLowerCase());
+        voucher.store.toLowerCase().contains(query.toLowerCase()) ||
+        voucher.tags.any((tag) => tag.toLowerCase().contains(query.toLowerCase()));
         
       final matchesCategory = categoryId == null || voucher.categoryId == categoryId;
       
-      return matchesQuery && matchesCategory;
+      final matchesFavorite = onlyFavorites != true || voucher.isFavorite;
+      
+      final matchesActive = onlyActive != true || (!voucher.isExpired && !voucher.isUsed);
+      
+      return matchesQuery && matchesCategory && matchesFavorite && matchesActive;
     }).toList();
   }
   
@@ -125,6 +130,85 @@ class VoucherProvider extends ChangeNotifier {
              !voucher.isExpired && 
              voucher.expiryDate.isBefore(sevenDaysLater);
     }).toList();
+  }
+  
+  // New methods for additional features
+  List<Voucher> getFavoriteVouchers() {
+    return _vouchers.where((voucher) => voucher.isFavorite).toList();
+  }
+  
+  List<Voucher> getVouchersByTag(String tag) {
+    return _vouchers.where(
+      (voucher) => voucher.tags.any(
+        (t) => t.toLowerCase() == tag.toLowerCase()
+      )
+    ).toList();
+  }
+  
+  Future<List<String>> getAllTags() async {
+    final Set<String> allTags = {};
+    
+    for (final voucher in _vouchers) {
+      allTags.addAll(voucher.tags);
+    }
+    
+    return allTags.toList()..sort();
+  }
+  
+  Future<bool> toggleVoucherFavorite(int id) async {
+    try {
+      final success = await _databaseService.toggleVoucherFavorite(id);
+      if (success) {
+        await loadVouchers(); // Reload to get updated voucher
+        return true;
+      }
+      return false;
+    } catch (e) {
+      _error = 'Failed to toggle favorite: ${e.toString()}';
+      return false;
+    }
+  }
+  
+  Future<bool> markVoucherAsUsed(int id, {String? notes}) async {
+    try {
+      final success = await _databaseService.markVoucherAsUsed(id, notes: notes);
+      if (success) {
+        await loadVouchers(); // Reload to get updated voucher
+        return true;
+      }
+      return false;
+    } catch (e) {
+      _error = 'Failed to mark voucher as used: ${e.toString()}';
+      return false;
+    }
+  }
+  
+  Future<Map<String, dynamic>> getVoucherUsageHistory(int id) async {
+    try {
+      return {
+        'success': true,
+        'history': await _databaseService.getVoucherUsageHistory(id),
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'error': e.toString(),
+      };
+    }
+  }
+  
+  Future<Map<String, dynamic>> getVoucherStatistics() async {
+    try {
+      return {
+        'success': true,
+        'stats': await _databaseService.getVoucherStatistics(),
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'error': e.toString(),
+      };
+    }
   }
 }
 
