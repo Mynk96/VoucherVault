@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 class Validators {
   /// Validates that a field is not empty
   static String? validateRequired(String? value, String errorMessage) {

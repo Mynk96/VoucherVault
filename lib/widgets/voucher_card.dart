@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/voucher.dart';
 import '../models/category.dart';
 import '../screens/voucher_details_screen.dart';
+import '../providers/providers.dart';
 import 'category_chip.dart';
 
 class VoucherCard extends StatelessWidget {

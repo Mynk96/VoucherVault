@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import '../models/voucher.dart';
 import '../models/category.dart';
+import '../providers/providers.dart';
 import '../services/ocr_service.dart';
 import '../services/notification_service.dart';
 import '../utils/validators.dart';

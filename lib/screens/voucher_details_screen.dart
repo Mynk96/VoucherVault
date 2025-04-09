@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../models/voucher.dart';
 import '../widgets/custom_app_bar.dart';
 import '../services/notification_service.dart';
+import '../providers/providers.dart';
 
 class VoucherDetailsScreen extends StatefulWidget {
   final Voucher voucher;
@@ -619,7 +620,7 @@ class _VoucherDetailsScreenState extends State<VoucherDetailsScreen> {
                       _selectedCategoryId = value;
                     });
                   },
-                ),
+                );
               },
             ),
             

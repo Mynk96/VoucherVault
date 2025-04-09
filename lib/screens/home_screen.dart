@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/voucher.dart';
 import '../widgets/voucher_card.dart';
 import '../widgets/custom_app_bar.dart';
+import '../providers/providers.dart';
 import 'add_voucher_screen.dart';
 import 'search_screen.dart';
 import 'categories_screen.dart';

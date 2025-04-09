@@ -1,142 +1,42 @@
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:timezone/timezone.dart' as tz;
-import 'package:timezone/data/latest.dart' as tz;
+import 'package:flutter/foundation.dart';
 import '../models/voucher.dart';
 
+// For web compatibility, we'll use a simpler notification service
 class NotificationService {
-  final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
-
+  // Initialize the service
   Future<void> init() async {
-    tz.initializeTimeZones();
-    
-    const AndroidInitializationSettings initializationSettingsAndroid = 
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-    
-    const DarwinInitializationSettings initializationSettingsDarwin = 
-        DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
-    );
-    
-    const InitializationSettings initializationSettings = InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsDarwin,
-    );
-    
-    await _notificationsPlugin.initialize(
-      initializationSettings,
-      onDidReceiveNotificationResponse: _onDidReceiveNotificationResponse,
-    );
-    
-    // Request permissions
-    await _requestPermissions();
+    // For web, we don't need to do anything special for initialization
   }
   
-  Future<void> _requestPermissions() async {
-    final AndroidFlutterLocalNotificationsPlugin? androidPlugin = 
-        _notificationsPlugin.resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
-    
-    if (androidPlugin != null) {
-      await androidPlugin.requestPermission();
-    }
-    
-    final DarwinFlutterLocalNotificationsPlugin? iosPlugin = 
-        _notificationsPlugin.resolvePlatformSpecificImplementation<
-            DarwinFlutterLocalNotificationsPlugin>();
-    
-    if (iosPlugin != null) {
-      await iosPlugin.requestPermissions(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
-    }
-  }
-  
-  void _onDidReceiveNotificationResponse(NotificationResponse response) {
-    // Handle notification tapped logic here
-  }
-  
+  // Schedule a notification for a voucher expiry
   Future<void> scheduleExpiryNotification(Voucher voucher) async {
-    // Create notification details
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails(
-      'voucher_expiry_channel',
-      'Voucher Expiry Notifications',
-      channelDescription: 'Notifications for vouchers about to expire',
-      importance: Importance.high,
-      priority: Priority.high,
-    );
+    // This is a stub implementation for web compatibility
+    // In a real mobile app, this would schedule actual notifications
     
-    const DarwinNotificationDetails iOSPlatformChannelSpecifics =
-        DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
-    
-    const NotificationDetails platformChannelSpecifics = NotificationDetails(
-      android: androidPlatformChannelSpecifics,
-      iOS: iOSPlatformChannelSpecifics,
-    );
-    
-    // Calculate notification time (7 days before expiry)
-    final now = tz.TZDateTime.now(tz.local);
-    final expiryDate = tz.TZDateTime.from(voucher.expiryDate, tz.local);
-    final notificationDate = expiryDate.subtract(const Duration(days: 7));
-    
-    // Only schedule if the notification date is in the future
-    if (notificationDate.isAfter(now)) {
-      await _notificationsPlugin.zonedSchedule(
-        voucher.id ?? 0, // Use voucher ID as notification ID
-        'Voucher Expiring Soon',
-        '${voucher.store}: ${voucher.description} expires on ${voucher.formattedExpiryDate}',
-        notificationDate,
-        platformChannelSpecifics,
-        androidAllowWhileIdle: true,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-      );
+    if (kDebugMode) {
+      print('Scheduled notification for: ${voucher.description} expiring on ${voucher.formattedExpiryDate}');
     }
   }
   
+  // Cancel a notification
   Future<void> cancelNotification(int id) async {
-    await _notificationsPlugin.cancel(id);
+    // This is a stub implementation for web compatibility
+    
+    if (kDebugMode) {
+      print('Cancelled notification with ID: $id');
+    }
   }
   
+  // Show an immediate notification
   Future<void> showImmediate({
     required String title,
     required String body,
     int id = 0,
   }) async {
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails(
-      'voucher_immediate_channel',
-      'Immediate Notifications',
-      channelDescription: 'Notifications that show immediately',
-      importance: Importance.high,
-      priority: Priority.high,
-    );
+    // This is a stub implementation for web compatibility
     
-    const DarwinNotificationDetails iOSPlatformChannelSpecifics =
-        DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
-    
-    const NotificationDetails platformChannelSpecifics = NotificationDetails(
-      android: androidPlatformChannelSpecifics,
-      iOS: iOSPlatformChannelSpecifics,
-    );
-    
-    await _notificationsPlugin.show(
-      id,
-      title,
-      body,
-      platformChannelSpecifics,
-    );
+    if (kDebugMode) {
+      print('Showing notification: $title - $body');
+    }
   }
 }
