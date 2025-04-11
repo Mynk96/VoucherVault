@@ -82,19 +82,19 @@ class OcrService {
     // Try to extract coupon/voucher code - enhanced patterns
     final codePatterns = [
       // Standard formats
-      RegExp(r'code[:\s]+([A-Za-z0-9]+)'),
-      RegExp(r'coupon[:\s]+([A-Za-z0-9]+)'),
-      RegExp(r'voucher[:\s]+([A-Za-z0-9]+)'),
-      RegExp(r'promo[:\s]+([A-Za-z0-9]+)'),
+      RegExp("code[:\\s]+([A-Za-z0-9]+)"),
+      RegExp("coupon[:\\s]+([A-Za-z0-9]+)"),
+      RegExp("voucher[:\\s]+([A-Za-z0-9]+)"),
+      RegExp("promo[:\\s]+([A-Za-z0-9]+)"),
       // Common formats with hyphens
-      RegExp(r'code[:\s]+([A-Za-z0-9\-]+)'),
+      RegExp("code[:\\s]+([A-Za-z0-9\\-]+)"),
       // Standalone codes that look like promo codes (uppercase with numbers)
-      RegExp(r'\b([A-Z0-9]{5,12})\b'),
+      RegExp("\\b([A-Z0-9]{5,12})\\b"),
       // Codes that might be preceded by "use" or "enter"
-      RegExp(r'use\s+([A-Za-z0-9\-]+)'),
-      RegExp(r'enter\s+([A-Za-z0-9\-]+)'),
+      RegExp("use\\s+([A-Za-z0-9\\-]+)"),
+      RegExp("enter\\s+([A-Za-z0-9\\-]+)"),
       // Codes that are near the "promo" or "discount" words
-      RegExp(r'(promo|discount|offer).*?([A-Z0-9]{5,12})'),
+      RegExp("(promo|discount|offer).*?([A-Z0-9]{5,12})"),
     ];
     
     for (final pattern in codePatterns) {
@@ -114,25 +114,23 @@ class OcrService {
       if (code.isNotEmpty) break;
     }
     
-    // Extract discount amount - enhanced patterns
+    // Extract discount amount - simplified approach focusing on percentages
     final discountPatterns = [
-      RegExp(r'(\d+)%\s*off'),
-      RegExp(r'(\d+)%\s*discount'),
-      RegExp(r'save\s+(\d+)%'),
-      RegExp(r'(\d+)%\s*savings'),
-      RegExp(r'\$(\d+(\.\d{1,2})?)\s*off'),
-      RegExp(r'save\s+\$(\d+(\.\d{1,2})?)'),
+      RegExp("(\\d+)%\\s*off"),
+      RegExp("(\\d+)%\\s*discount"),
+      RegExp("save\\s+(\\d+)%"),
+      RegExp("(\\d+)%\\s*savings"),
       // Common discount formats
-      RegExp(r'get\s+(\d+)%\s*off'),
-      RegExp(r'discount\s*:\s*(\d+)%'),
-      RegExp(r'(\d+)%'),  // Simple percentage (less specific, use last)
+      RegExp("get\\s+(\\d+)%\\s*off"),
+      RegExp("discount\\s*:\\s*(\\d+)%"),
+      RegExp("(\\d+)%"),  // Simple percentage (less specific, use last)
     ];
     
     for (final pattern in discountPatterns) {
       final match = pattern.firstMatch(lowerText);
       if (match != null && match.groupCount >= 1) {
         final value = match.group(1) ?? '0';
-        if (pattern.pattern.contains(r'%')) {
+        if (pattern.pattern.contains("%")) {
           discountAmount = double.tryParse(value) ?? 0.0;
           discountType = 'percentage';
           debugPrint('Found percentage discount: $discountAmount% using pattern: ${pattern.pattern}');
@@ -147,17 +145,17 @@ class OcrService {
     
     // Try to extract store name - enhanced patterns
     final storePatterns = [
-      RegExp(r'at\s+([A-Za-z0-9\s&\']+?)[\.\,\s]'),
-      RegExp(r'from\s+([A-Za-z0-9\s&\']+?)[\.\,\s]'),
-      RegExp(r'([A-Za-z0-9\s&\']+?)\s+voucher'),
-      RegExp(r'([A-Za-z0-9\s&\']+?)\s+coupon'),
-      RegExp(r'([A-Za-z0-9\s&\']+?)\s+offer'),
+      RegExp("at\\s+([A-Za-z0-9\\s&]+?)[\\.,\\s]?"),
+      RegExp("from\\s+([A-Za-z0-9\\s&]+?)[\\.,\\s]?"),
+      RegExp("([A-Za-z0-9\\s&]+?)\\s+voucher"),
+      RegExp("([A-Za-z0-9\\s&]+?)\\s+coupon"),
+      RegExp("([A-Za-z0-9\\s&]+?)\\s+offer"),
       // Look for store names in common positions
-      RegExp(r'^([A-Za-z0-9\s&\']+?)[\.\,\s]'),  // At the beginning
+      RegExp("^([A-Za-z0-9\\s&]+?)[\\.,\\s]"),  // At the beginning
       // Look for store names that might be emphasized (all caps)
-      RegExp(r'\b([A-Z]{2,}[A-Z\s&\']+)\b'),
+      RegExp("\\b([A-Z]{2,}[A-Z\\s&]+)\\b"),
       // Look for common store name patterns
-      RegExp(r'shop\s+(?:at|with)\s+([A-Za-z0-9\s&\']+)'),
+      RegExp("shop\\s+(?:at|with)\\s+([A-Za-z0-9\\s&]+)"),
     ];
     
     for (final pattern in storePatterns) {
@@ -191,22 +189,22 @@ class OcrService {
     // Try to extract expiry date - enhanced patterns
     final datePatterns = [
       // Standard date formats
-      RegExp(r'expires?\s+on\s+(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})'),
-      RegExp(r'valid\s+until\s+(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})'),
-      RegExp(r'expires?\s+(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})'),
+      RegExp("expires?\\s+on\\s+(\\d{1,2}[/-]\\d{1,2}[/-]\\d{2,4})"),
+      RegExp("valid\\s+until\\s+(\\d{1,2}[/-]\\d{1,2}[/-]\\d{2,4})"),
+      RegExp("expires?\\s+(\\d{1,2}[/-]\\d{1,2}[/-]\\d{2,4})"),
       // Word formats like "Jan 31, 2023"
-      RegExp(r'expires?\s+on\s+([A-Za-z]{3,9}\s+\d{1,2},?\s+\d{4})'),
-      RegExp(r'valid\s+until\s+([A-Za-z]{3,9}\s+\d{1,2},?\s+\d{4})'),
-      RegExp(r'expires?\s+([A-Za-z]{3,9}\s+\d{1,2},?\s+\d{4})'),
+      RegExp("expires?\\s+on\\s+([A-Za-z]{3,9}\\s+\\d{1,2},?\\s+\\d{4})"),
+      RegExp("valid\\s+until\\s+([A-Za-z]{3,9}\\s+\\d{1,2},?\\s+\\d{4})"),
+      RegExp("expires?\\s+([A-Za-z]{3,9}\\s+\\d{1,2},?\\s+\\d{4})"),
       // "Valid through" format
-      RegExp(r'valid\s+through\s+(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})'),
-      RegExp(r'valid\s+through\s+([A-Za-z]{3,9}\s+\d{1,2},?\s+\d{4})'),
+      RegExp("valid\\s+through\\s+(\\d{1,2}[/-]\\d{1,2}[/-]\\d{2,4})"),
+      RegExp("valid\\s+through\\s+([A-Za-z]{3,9}\\s+\\d{1,2},?\\s+\\d{4})"),
       // Expiration date without explicit mention
-      RegExp(r'expiration\s+date\s*:?\s*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})'),
-      RegExp(r'expiration\s+date\s*:?\s*([A-Za-z]{3,9}\s+\d{1,2},?\s+\d{4})'),
+      RegExp("expiration\\s+date\\s*:?\\s*(\\d{1,2}[/-]\\d{1,2}[/-]\\d{2,4})"),
+      RegExp("expiration\\s+date\\s*:?\\s*([A-Za-z]{3,9}\\s+\\d{1,2},?\\s+\\d{4})"),
       // End date
-      RegExp(r'end\s+date\s*:?\s*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})'),
-      RegExp(r'end\s+date\s*:?\s*([A-Za-z]{3,9}\s+\d{1,2},?\s+\d{4})'),
+      RegExp("end\\s+date\\s*:?\\s*(\\d{1,2}[/-]\\d{1,2}[/-]\\d{2,4})"),
+      RegExp("end\\s+date\\s*:?\\s*([A-Za-z]{3,9}\\s+\\d{1,2},?\\s+\\d{4})"),
     ];
     
     for (final pattern in datePatterns) {
@@ -218,7 +216,7 @@ class OcrService {
         try {
           if (dateStr.contains('/') || dateStr.contains('-')) {
             // For formats like MM/DD/YYYY or DD/MM/YYYY
-            final parts = dateStr.split(RegExp(r'[/-]'));
+            final parts = dateStr.split(RegExp("[/-]"));
             if (parts.length == 3) {
               // Try both MM/DD/YYYY and DD/MM/YYYY interpretations
               try {
@@ -335,7 +333,8 @@ class OcrService {
       debugPrint('Generated code: $code');
     }
     
-    final voucher = Voucher(
+    // Create a Voucher object with extracted details
+    final extractedVoucher = Voucher(
       code: code,
       description: description,
       store: store,
@@ -345,10 +344,10 @@ class OcrService {
       imageUrl: '',  // Will be set later when the image is saved
     );
     
-    debugPrint('Extracted voucher details: $voucher');
+    debugPrint('Extracted voucher details: $extractedVoucher');
     return VoucherExtractionResult(
       success: true,
-      voucher: voucher,
+      voucher: extractedVoucher,
     );
   }
   
