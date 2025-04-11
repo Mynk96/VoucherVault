@@ -46,18 +46,41 @@ class _AddVoucherScreenState extends State<AddVoucherScreen> {
       final ImagePicker picker = ImagePicker();
       final XFile? pickedFile = await picker.pickImage(
         source: source,
-        imageQuality: 70,
+        imageQuality: 85,  // Higher quality for better OCR results
+        maxWidth: 1200,    // Reasonable size for OCR
       );
       
       if (pickedFile != null) {
-        if (source == ImageSource.camera) {
-          // If it's a camera image, process with OCR directly
-          final File imageFile = File(pickedFile.path);
+        // Process both camera and gallery images with OCR
+        final File imageFile = File(pickedFile.path);
+        
+        // Show a dialog asking if the user wants to extract information from the image
+        final shouldExtract = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Process Image'),
+            content: const Text(
+              'Would you like to extract voucher information from this image?'
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('No, Just Add Image'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Yes, Extract Info'),
+              ),
+            ],
+          ),
+        ) ?? false;
+        
+        if (shouldExtract) {
           _processWithOCR(imageFile);
         } else {
-          // For gallery images, just set the image file
+          // Just set the image file without OCR processing
           setState(() {
-            _imageFile = File(pickedFile.path);
+            _imageFile = imageFile;
           });
         }
       }

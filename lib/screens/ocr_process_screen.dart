@@ -17,12 +17,19 @@ class OcrProcessScreen extends StatefulWidget {
 
 class _OcrProcessScreenState extends State<OcrProcessScreen> {
   final OcrService _ocrService = OcrService();
-  late Future<VoucherExtractionResult> _extractionFuture;
+  Future<VoucherExtractionResult>? _extractionFuture;
   
   @override
   void initState() {
     super.initState();
-    _extractionFuture = _ocrService.extractVoucherDetails(widget.imageFile);
+    // Add a slight delay to ensure the UI is built before starting the heavy OCR processing
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        setState(() {
+          _extractionFuture = _ocrService.extractVoucherDetails(widget.imageFile);
+        });
+      }
+    });
   }
   
   @override
@@ -34,19 +41,28 @@ class _OcrProcessScreenState extends State<OcrProcessScreen> {
       body: FutureBuilder<VoucherExtractionResult>(
         future: _extractionFuture,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          // If the future is null (extraction hasn't started yet) or still loading
+          if (_extractionFuture == null || snapshot.connectionState == ConnectionState.waiting) {
             return _buildLoadingState();
           } else if (snapshot.hasError) {
+            // Log the error for debugging
+            debugPrint('OCR Error: ${snapshot.error}');
             return _buildErrorState(snapshot.error.toString());
           } else if (snapshot.hasData) {
             final result = snapshot.data!;
             if (result.success && result.voucher != null) {
+              // Log success for debugging
+              debugPrint('OCR Success: ${result.voucher}');
               return _buildSuccessState(result.voucher!);
             } else {
+              // Log the error for debugging
+              debugPrint('OCR Error: ${result.errorMessage}');
               return _buildErrorState(result.errorMessage);
             }
           } else {
-            return _buildErrorState('Failed to process image.');
+            // This case should rarely happen
+            debugPrint('OCR Error: No data and no error');
+            return _buildErrorState('Failed to process image. Please try again.');
           }
         },
       ),
